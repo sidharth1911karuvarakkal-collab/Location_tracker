@@ -7,7 +7,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, ContextTypes, CallbackQueryHandler, MessageHandler, filters, ConversationHandler
 
 # Configuration
-TELEGRAM_TOKEN = os.environ.get('TELEGRAM_TOKEN')
+TELEGRAM_TOKEN = os.environ.get('8795586906:AAE3rFi0YPQ_6NPPQFuRkiJ8sNoHLmJ4VlI')
 if not TELEGRAM_TOKEN:
     raise ValueError("No TELEGRAM_TOKEN set")
 
